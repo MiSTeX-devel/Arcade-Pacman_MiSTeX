@@ -5,6 +5,8 @@ use-template-sys: True
 sourcedirs:
   - sys
   - rtl
+  - rtl/cpu
+  - rtl/sn76489
 
 quartus:
   sourcefiles:
