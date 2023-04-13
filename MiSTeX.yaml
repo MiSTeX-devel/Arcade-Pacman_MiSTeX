@@ -2,6 +2,9 @@ mainfile: Arcade-Pacman.sv
 
 use-template-sys: True
 
+defines:
+  MISTER_FB: 1
+
 sourcedirs:
   - sys
   - rtl
