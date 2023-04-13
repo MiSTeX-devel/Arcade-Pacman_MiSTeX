@@ -195,7 +195,7 @@ wire [1:0] ar = status[15:14];
 assign VIDEO_ARX = (!ar) ? ((status[2] | mod_ponp) ? 12'd2880 : 12'd2219) : (ar - 1'd1);
 assign VIDEO_ARY = (!ar) ? ((status[2] | mod_ponp) ? 12'd2219 : 12'd2880) : 12'd0;
 
-`include "build_id.v" 
+`include "build_id.vh" 
 localparam CONF_STR = {
 	"A.PACMAN;;",
 	"H0OEF,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
