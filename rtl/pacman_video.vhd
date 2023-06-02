@@ -154,6 +154,7 @@ begin
 		data_a    => I_DB,
 
 		clock_b   => CLK,
+		enable_b  => '1',
 		address_b => I_AB(3 downto 0),
 		q_b       => sprite_xy_ram_temp
 	);
@@ -249,11 +250,13 @@ begin
 	port map
 	(
 		clock_a   => clk,
+		enable_a  => '1',
 		wren_a    => dn_wr and gfx_cs,
 		address_a => dn_addr(12 downto 0),
 		data_a    => dn_data,
 	
 		clock_b   => clk,
+		enable_b  => '1',
 		address_b => ca,
 		q_b       => char_rom_5ef_buf
 	);
@@ -317,11 +320,13 @@ begin
 	port map
 	(
 		clock_a   => CLK,
+		enable_a  => '1',
 		wren_a    => dn_wr and rom4a_cs and prom_cs,
 		address_a => dn_addr(7 downto 0),
 		data_a    => dn_data,
 	
 		clock_b   => CLK,
+		enable_b  => '1',
 		address_b(7)          => '0',
 		address_b(6 downto 2) => vout_db(4 downto 0),
 		address_b(1 downto 0) => shift_op(1 downto 0),
@@ -408,15 +413,15 @@ begin
 	port map
 	(
 		clock_a   => CLK,
+		enable_a  => '1',
 		wren_a    => dn_wr and rom7_cs and prom_cs,
 		address_a => dn_addr(3 downto 0),
 		data_a    => dn_data,
 	
 		clock_b   => CLK,
+		enable_b  => '1',
 		address_b =>  final_col,
-		q_b(2 downto 0)   =>  O_RED,
-		q_b(5 downto 3)   =>  O_GREEN,
-		q_b(7 downto 6)   =>  O_BLUE
+		q_b   =>  O_BLUE & O_GREEN & O_RED
   );
 
 end architecture;

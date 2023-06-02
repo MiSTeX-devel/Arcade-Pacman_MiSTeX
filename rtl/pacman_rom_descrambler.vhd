@@ -285,11 +285,13 @@ begin
 	port map
 	(
 		clock_a   => clk,
+		enable_a  => '1',
 		wren_a    => dn_wr and rom0_cs,
 		address_a => dn_addr(13 downto 0),
 		data_a    => dn_data,
 	
 		clock_b   => clk,
+		enable_b  => '1',
 		address_b => rom_addr(13 downto 0),
 		q_b       => rom_lo
    );
@@ -298,11 +300,13 @@ begin
 	port map
 	(
 		clock_a   => clk,
+		enable_a  => '1',
 		wren_a    => dn_wr and rom1_cs,
 		address_a => dn_addr(13 downto 0),
 		data_a    => dn_data,
 	
 		clock_b   => clk,
+		enable_b  => '1',
 		address_b => rom_addr(13 downto 0),
 		q_b       => rom_hi
    );

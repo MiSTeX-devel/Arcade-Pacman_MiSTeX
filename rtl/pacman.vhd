@@ -51,6 +51,8 @@ library ieee;
   use ieee.numeric_std.all;
 
 library UNISIM;
+library work;
+use work.all;
 
 entity PACMAN is
 port
@@ -117,6 +119,7 @@ architecture RTL of PACMAN is
 	signal hcnt             : std_logic_vector(8 downto 0) := "010000000"; -- 80
 	signal vcnt             : std_logic_vector(8 downto 0) := "011111000"; -- 0F8
 	signal vcnt_offset      : std_logic_vector(8 downto 0);
+
 
 	signal do_vcnt_check    : boolean;
 	signal hsync            : std_logic;
@@ -224,6 +227,130 @@ architecture RTL of PACMAN is
 		IOB_out    : out std_logic_vector(7 downto 0)
 	);
 	end component;
+
+	component PACMAN_VRAM_ADDR
+		port (
+		AB : out std_logic_vector (11 downto 0);
+		H256_L : in std_logic;
+		H128 : in std_logic;
+		H64 : in std_logic;
+		H32 : in std_logic;
+		H16 : in std_logic;
+		H8 : in std_logic;
+		H4 : in std_logic;
+		H2 : in std_logic;
+		H1 : in std_logic;
+		V128 : in std_logic;
+		V64 : in std_logic;
+		V32 : in std_logic;
+		V16 : in std_logic;
+		V8 : in std_logic;
+		V4 : in std_logic;
+		V2 : in std_logic;
+		V1 : in std_logic;
+		FLIP : in std_logic
+	  );
+	end component;
+
+	component rom_descrambler
+		port (
+		CLK : in std_logic;
+		MRTNT : in std_logic;
+		MSPACMAN : in std_logic;
+		PLUS : in std_logic;
+		JMPST : in std_logic;
+		EEEK : in std_logic;
+		GLOB : in std_logic;
+		dcnt : in std_logic_vector(1 downto 0);
+		cpu_m1_l : in std_logic;
+		addr : in std_logic_vector(15 downto 0);
+		data : out std_logic_vector( 7 downto 0);
+		dn_addr : in std_logic_vector(15 downto 0);
+		dn_data : in std_logic_vector(7 downto 0);
+		dn_wr : in std_logic
+	  );
+	end component;
+
+	component PACMAN_VIDEO
+		port (
+		I_HCNT : in std_logic_vector(8 downto 0);
+		I_VCNT : in std_logic_vector(8 downto 0);
+		I_AB : in std_logic_vector(11 downto 0);
+		I_DB : in std_logic_vector( 7 downto 0);
+		I_HBLANK : in std_logic;
+		I_VBLANK : in std_logic;
+		I_FLIP : in std_logic;
+		I_WR2_L : in std_logic;
+		dn_addr : in std_logic_vector(15 downto 0);
+		dn_data : in std_logic_vector(7 downto 0);
+		dn_wr : in std_logic;
+		O_RED : out std_logic_vector(2 downto 0);
+		O_GREEN : out std_logic_vector(2 downto 0);
+		O_BLUE : out std_logic_vector(1 downto 0);
+		MRTNT : in std_logic;
+		PONP : in std_logic;
+		ENA_6 : in std_logic;
+		CLK : in std_logic;
+		flip_screen : in std_logic
+	  );
+	end component;
+
+	component PACMAN_AUDIO
+		port (
+		I_HCNT : in std_logic_vector(8 downto 0);
+		I_AB : in std_logic_vector(11 downto 0);
+		I_DB : in std_logic_vector( 7 downto 0);
+		I_WR1_L : in std_logic;
+		I_WR0_L : in std_logic;
+		I_SOUND_ON : in std_logic;
+		dn_addr : in std_logic_vector(15 downto 0);
+		dn_data : in std_logic_vector(7 downto 0);
+		dn_wr : in std_logic;
+		O_AUDIO : out std_logic_vector(7 downto 0);
+		ENA_6 : in std_logic;
+		CLK : in std_logic
+	  );
+	end component;
+
+	component sn76489_top
+		generic (
+		  clock_div_16_g : integer
+		);
+		  port (
+		  clock_i : in std_logic;
+		  clock_en_i : in std_logic;
+		  res_n_i : in std_logic;
+		  ce_n_i : in std_logic;
+		  we_n_i : in std_logic;
+		  ready_o : out std_logic;
+		  d_i : in std_logic_vector(0 to 7);
+		  aout_o : out signed(0 to 7)
+		);
+	  end component;
+
+	  component T80sed
+		port (
+		RESET_n : in std_logic;
+		CLK_n : in std_logic;
+		CLKEN : in std_logic;
+		WAIT_n : in std_logic;
+		INT_n : in std_logic;
+		NMI_n : in std_logic;
+		BUSRQ_n : in std_logic;
+		M1_n : out std_logic;
+		MREQ_n : out std_logic;
+		IORQ_n : out std_logic;
+		RD_n : out std_logic;
+		WR_n : out std_logic;
+		RFSH_n : out std_logic;
+		HALT_n : out std_logic;
+		BUSAK_n : out std_logic;
+		A : out std_logic_vector(15 downto 0);
+		DI : in std_logic_vector(7 downto 0);
+		DO : out std_logic_vector(7 downto 0)
+	  );
+	end component;
+
 begin
 
 --
@@ -322,7 +449,7 @@ begin
 	end if;
 end process;
 
-u_cpu : work.T80sed
+u_cpu : component T80sed
 port map (
 	RESET_n => watchdog_reset_l and (not reset),
 	CLK_n   => clk,
@@ -352,7 +479,7 @@ sync_bus_cs_l   <= '0' when cpu_mreq_l = '0' and cpu_rfsh_l = '1' and cpu_addr(1
 sync_bus_wreq_l <= '0' when sync_bus_cs_l = '0' and hcnt(1) = '1' and cpu_rd_l = '0' else '1';
 sync_bus_stb    <= '0' when sync_bus_cs_l = '0' and hcnt(1) = '0' else '1';
 sync_bus_r_w_l  <= '0' when sync_bus_stb  = '0' and cpu_rd_l = '1' else '1';
- 
+
 --
 -- sync bus custom ic
 --
@@ -375,7 +502,7 @@ end process;
 --
 -- vram addr custom ic
 --
-u_vram_addr : work.PACMAN_VRAM_ADDR
+u_vram_addr : component PACMAN_VRAM_ADDR
 port map (
 	AB      => vram_addr_ab,
 	H256_L  => hcnt(8),
@@ -538,13 +665,13 @@ begin
 		end if;
 	end if;
 end process;
- 
+
 
 inj <= in0(3 downto 0) when control_reg(5 downto 4) = "01" or mod_club = '0' else
        in1(3 downto 0) when control_reg(5 downto 4) = "10" else
        in0(3 downto 0) and in1(3 downto 0);
 
-cpu_data_in <=	cpu_vec_reg               when cpu_iorq_l = '0' and cpu_m1_l = '0' else 
+cpu_data_in <=	cpu_vec_reg               when cpu_iorq_l = '0' and cpu_m1_l = '0' else
                sync_bus_reg              when sync_bus_wreq_l = '0' else
                ram2_data                 when ram2_cs = '1'         else
                rom_data                  when cpu_addr(14) = '0'    else -- ROM at 0000 - 3fff / 8000 - bfff
@@ -562,13 +689,14 @@ port map
 (
 	clock_a   => clk,
 --	enable_a  => ena_6,
+ 	enable_a  => '1',
 	wren_a    => not sync_bus_r_w_l and not vram_l and ena_6 and not (hs_access_read or hs_access_write),
 	address_a => ab(11 downto 0),
 	data_a    => cpu_data_out, -- cpu only source of ram data
 	q_a       => ram_data,
 	clock_b   => clk,
 	address_b => hs_address,
-   enable_b  => hs_access_read or hs_access_write,
+ 	enable_b  => hs_access_read or hs_access_write,
 	wren_b    => hs_write_enable,
 	data_b    => hs_data_in,
 	q_b       => hs_data_out
@@ -589,6 +717,7 @@ port map
 	data_a    => cpu_data_out,
 	q_a       => ram2_data,
 	clock_b   => clk,
+ 	enable_b  => '1',
 	address_b => cpu_addr(9 downto 0)
 );
 
@@ -613,7 +742,7 @@ begin
 	end if;
 end process;
 
-u_program_rom: work.rom_descrambler
+u_program_rom: component rom_descrambler
 port map(
 	CLK      => clk,
 	MRTNT    => mod_mrtnt,
@@ -623,7 +752,7 @@ port map(
 	PLUS     => mod_plus,
 	JMPST		=> mod_jmpst,
 	dcnt     => dcnt,
-	cpu_m1_l => cpu_m1_l, 
+	cpu_m1_l => cpu_m1_l,
 	addr     => cpu_addr,
 	data     => rom_data,
 	dn_addr  => dn_addr,
@@ -634,7 +763,7 @@ port map(
 --
 -- video subsystem
 --
-u_video : work.PACMAN_VIDEO
+u_video : component PACMAN_VIDEO
 port map (
 	I_HCNT    => hcnt,
 	I_VCNT    => vcnt,
@@ -670,7 +799,7 @@ O_VBLANK  <= vblank;
 --
 -- audio subsystem
 --
-u_audio : work.PACMAN_AUDIO
+u_audio : component PACMAN_AUDIO
 port map (
 	I_HCNT        => hcnt,
 	--
@@ -720,7 +849,7 @@ process(clk, reset) begin
 	end if;
 end process;
 
-sn1 : entity work.sn76489_top
+sn1 : component sn76489_top
 generic map (
 	clock_div_16_g => 1
 )
@@ -735,7 +864,7 @@ port map (
 	aout_o     => wav1s
 );
 
-sn2 : work.sn76489_top
+sn2 : component sn76489_top
 generic map (
 	clock_div_16_g => 1
 )

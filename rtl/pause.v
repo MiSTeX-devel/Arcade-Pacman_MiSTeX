@@ -71,7 +71,7 @@ wire 			dim_video;				 				// Dim video requested (active-high)
 assign pause_cpu = (pause_request | pause_toggle  | (OSD_STATUS & options[pause_in_osd])) & !reset;
 assign dim_video = (pause_timer >= dim_timeout);
 
-always @(posedge clk_sys) begin
+always @(posedge clk_sys) begin: pause_button_block
 
 	// Track user pause button down
 	reg user_button_last;

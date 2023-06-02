@@ -111,6 +111,7 @@ begin
 		data_a    => data,
 
 		clock_b   => CLK,
+		enable_b  => '1',
 		address_b => addr(3 downto 0),
 		q_b       => vol_ram_dout
 	);
@@ -125,6 +126,7 @@ begin
 		data_a    => data,
 
 		clock_b   => CLK,
+		enable_b  => '1',
 		address_b => addr(3 downto 0),
 		q_b       => frq_ram_dout
 	);
@@ -200,11 +202,13 @@ begin
   port map
 	(
 		clock_a   => CLK,
+		enable_a  => '1',
 		wren_a    => dn_wr and rom1m_cs and prom_cs,
 		address_a => dn_addr(7 downto 0),
 		data_a    => dn_data,
 	
 		clock_b   => CLK,
+		enable_b  => '1',
 		address_b => rom1m_addr,
 		q_b       => rom1m_data
    );
